@@ -11,6 +11,34 @@ const Index = () => {
   const [generatedCharacter, setGeneratedCharacter] = useState<any>(null);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [backgroundMusic] = useState(() => {
+    const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_4a888f744c.mp3');
+    audio.loop = true;
+    audio.volume = 0.3;
+    return audio;
+  });
+
+  const playSound = (type: 'hover' | 'click' | 'generate') => {
+    const sounds = {
+      hover: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3',
+      click: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c610232532.mp3',
+      generate: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3'
+    };
+    const audio = new Audio(sounds[type]);
+    audio.volume = 0.4;
+    audio.play().catch(() => {});
+  };
+
+  const toggleMusic = () => {
+    if (isMusicPlaying) {
+      backgroundMusic.pause();
+    } else {
+      backgroundMusic.play().catch(() => {});
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
 
   const heroImages = [
     'https://cdn.poehali.dev/files/902a10c0-1041-4974-99e4-814f00cd8f66.jpg',
@@ -27,19 +55,28 @@ const Index = () => {
     if (!emblaApi) return;
     emblaApi.on('select', () => {
       setSelectedIndex(emblaApi.selectedScrollSnap());
+      playSound('click');
     });
 
-    const autoplay = setInterval(() => {
-      emblaApi.scrollNext();
-    }, 5000);
+    let autoplay: NodeJS.Timeout;
+    
+    if (!isHovering) {
+      autoplay = setInterval(() => {
+        emblaApi.scrollNext();
+      }, 5000);
+    }
 
-    return () => clearInterval(autoplay);
-  }, [emblaApi]);
+    return () => {
+      if (autoplay) clearInterval(autoplay);
+      backgroundMusic.pause();
+    };
+  }, [emblaApi, isHovering, backgroundMusic]);
 
   const races = ['Человек', 'Эльф', 'Дварф', 'Орк', 'Полурослик'];
   const classes = ['Воин', 'Маг', 'Плут', 'Жрец', 'Следопыт'];
 
   const generateCharacter = () => {
+    playSound('generate');
     const race = races[Math.floor(Math.random() * races.length)];
     const charClass = classes[Math.floor(Math.random() * classes.length)];
     
@@ -77,11 +114,12 @@ const Index = () => {
             <Icon name="Moon" className="text-accent" size={32} />
             <h1 className="text-2xl font-bold text-primary">Midnight Chronicles</h1>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-6 items-center">
             {['home', 'characters', 'library', 'community'].map((section) => (
               <button
                 key={section}
-                onClick={() => setActiveSection(section)}
+                onClick={() => { setActiveSection(section); playSound('click'); }}
+                onMouseEnter={() => playSound('hover')}
                 className={`capitalize transition-all hover:text-primary ${
                   activeSection === section ? 'text-primary font-semibold' : 'text-muted-foreground'
                 }`}
@@ -92,13 +130,26 @@ const Index = () => {
                 {section === 'community' && 'Сообщество'}
               </button>
             ))}
+            <button
+              onClick={toggleMusic}
+              onMouseEnter={() => playSound('hover')}
+              className="ml-4 p-2 rounded-full bg-primary/20 hover:bg-primary/40 border border-primary/30 transition-all"
+              title={isMusicPlaying ? 'Выключить музыку' : 'Включить музыку'}
+            >
+              <Icon name={isMusicPlaying ? 'Volume2' : 'VolumeX'} size={20} className="text-accent" />
+            </button>
           </div>
         </div>
       </nav>
 
       {activeSection === 'home' && (
         <>
-          <div className="relative overflow-hidden" ref={emblaRef}>
+          <div 
+            className="relative overflow-hidden" 
+            ref={emblaRef}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
             <div className="flex">
               {heroImages.map((img, idx) => (
                 <div key={idx} className="flex-[0_0_100%] min-w-0 relative">
@@ -120,13 +171,15 @@ const Index = () => {
               ))}
             </div>
             <button
-              onClick={scrollPrev}
+              onClick={() => { scrollPrev(); playSound('click'); }}
+              onMouseEnter={() => playSound('hover')}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 backdrop-blur-md p-3 rounded-full border border-primary/30 transition-all"
             >
               <Icon name="ChevronLeft" size={32} className="text-accent" />
             </button>
             <button
-              onClick={scrollNext}
+              onClick={() => { scrollNext(); playSound('click'); }}
+              onMouseEnter={() => playSound('hover')}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 backdrop-blur-md p-3 rounded-full border border-primary/30 transition-all"
             >
               <Icon name="ChevronRight" size={32} className="text-accent" />
@@ -135,7 +188,8 @@ const Index = () => {
               {heroImages.map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => emblaApi?.scrollTo(idx)}
+                  onClick={() => { emblaApi?.scrollTo(idx); playSound('click'); }}
+                  onMouseEnter={() => playSound('hover')}
                   className={`w-3 h-3 rounded-full transition-all blur-[0.5px] ${
                     idx === selectedIndex ? 'bg-accent w-8' : 'bg-muted/50'
                   }`}
@@ -146,21 +200,22 @@ const Index = () => {
         <section className="container mx-auto px-4 py-20 text-center relative z-20">
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             <Badge className="bg-primary/20 text-accent border-primary/30 text-lg px-6 py-2">
-              ✨ Powered by AI
+              ✨ Powered by DeepSeek AI
             </Badge>
             <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent leading-tight">
               Midnight Chronicles
             </h1>
             <p className="text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Создавай уникальные истории, персонажей и миры с помощью ИИ.
+              Создавай уникальные истории, персонажей и миры с помощью DeepSeek AI.
               <br />
-              <span className="text-accent">Твоё путешествие без границ начинается сейчас.</span>
+              <span className="text-accent">Глубокие истории без цензуры. Твоё путешествие без границ начинается сейчас.</span>
             </p>
             <div className="flex gap-4 justify-center pt-6">
               <Button 
                 size="lg" 
                 className="bg-primary hover:bg-primary/80 text-lg px-8 py-6"
-                onClick={() => setActiveSection('characters')}
+                onClick={() => { setActiveSection('characters'); playSound('click'); }}
+                onMouseEnter={() => playSound('hover')}
               >
                 <Icon name="Sparkles" className="mr-2" size={20} />
                 Создать персонажа
@@ -169,7 +224,8 @@ const Index = () => {
                 size="lg" 
                 variant="outline" 
                 className="border-primary/30 text-lg px-8 py-6"
-                onClick={() => setActiveSection('library')}
+                onClick={() => { setActiveSection('library'); playSound('click'); }}
+                onMouseEnter={() => playSound('hover')}
               >
                 <Icon name="BookOpen" className="mr-2" size={20} />
                 Библиотека
