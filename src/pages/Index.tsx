@@ -13,12 +13,23 @@ const Index = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [musicVolume, setMusicVolume] = useState(0.3);
+  const [soundVolume, setSoundVolume] = useState(0.4);
+  const [user, setUser] = useState<{email: string} | null>(null);
+  
   const [backgroundMusic] = useState(() => {
     const audio = new Audio('https://cdn.pixabay.com/download/audio/2022/03/10/audio_4a888f744c.mp3');
     audio.loop = true;
     audio.volume = 0.3;
     return audio;
   });
+
+  useEffect(() => {
+    backgroundMusic.volume = musicVolume;
+  }, [musicVolume, backgroundMusic]);
 
   const playSound = (type: 'hover' | 'click' | 'generate') => {
     const sounds = {
@@ -27,8 +38,14 @@ const Index = () => {
       generate: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3'
     };
     const audio = new Audio(sounds[type]);
-    audio.volume = 0.4;
+    audio.volume = soundVolume;
     audio.play().catch(() => {});
+  };
+
+  const handleAuth = (email: string, password: string) => {
+    playSound('click');
+    setUser({ email });
+    setShowAuth(false);
   };
 
   const toggleMusic = () => {
@@ -115,32 +132,179 @@ const Index = () => {
             <h1 className="text-2xl font-bold text-primary">Midnight Chronicles</h1>
           </div>
           <div className="flex gap-6 items-center">
-            {['home', 'characters', 'library', 'community'].map((section) => (
-              <button
-                key={section}
-                onClick={() => { setActiveSection(section); playSound('click'); }}
-                onMouseEnter={() => playSound('hover')}
-                className={`capitalize transition-all hover:text-primary ${
-                  activeSection === section ? 'text-primary font-semibold' : 'text-muted-foreground'
-                }`}
-              >
-                {section === 'home' && 'Главная'}
-                {section === 'characters' && 'Персонажи'}
-                {section === 'library' && 'Библиотека'}
-                {section === 'community' && 'Сообщество'}
-              </button>
-            ))}
             <button
-              onClick={toggleMusic}
+              onClick={() => { setActiveSection('community'); playSound('click'); }}
               onMouseEnter={() => playSound('hover')}
-              className="ml-4 p-2 rounded-full bg-primary/20 hover:bg-primary/40 border border-primary/30 transition-all"
-              title={isMusicPlaying ? 'Выключить музыку' : 'Включить музыку'}
+              className={`capitalize transition-all hover:text-primary ${
+                activeSection === 'community' ? 'text-primary font-semibold' : 'text-muted-foreground'
+              }`}
             >
-              <Icon name={isMusicPlaying ? 'Volume2' : 'VolumeX'} size={20} className="text-accent" />
+              Сообщество
+            </button>
+            
+            {!user && (
+              <button
+                onClick={() => { setShowAuth(true); playSound('click'); }}
+                onMouseEnter={() => playSound('hover')}
+                className="px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/40 border border-primary/30 transition-all text-accent"
+              >
+                Войти
+              </button>
+            )}
+            
+            {user && (
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">{user.email}</span>
+                <button
+                  onClick={() => { setUser(null); playSound('click'); }}
+                  onMouseEnter={() => playSound('hover')}
+                  className="text-muted-foreground hover:text-destructive transition-all"
+                >
+                  <Icon name="LogOut" size={20} />
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setShowSettings(!showSettings); playSound('click'); }}
+              onMouseEnter={() => playSound('hover')}
+              className="p-2 rounded-full bg-primary/20 hover:bg-primary/40 border border-primary/30 transition-all"
+              title="Настройки"
+            >
+              <Icon name="Settings" size={20} className="text-accent" />
             </button>
           </div>
         </div>
       </nav>
+
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowSettings(false)}>
+          <Card className="bg-card/95 backdrop-blur-md border-primary/30 w-full max-w-md animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Настройки
+                <button onClick={() => setShowSettings(false)}>
+                  <Icon name="X" size={24} className="text-muted-foreground hover:text-foreground" />
+                </button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm">Фоновая музыка</label>
+                  <span className="text-sm text-muted-foreground">{Math.round(musicVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={musicVolume * 100}
+                  onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
+                  className="w-full accent-primary"
+                />
+                <button
+                  onClick={toggleMusic}
+                  className="w-full px-4 py-2 rounded-lg bg-primary/20 hover:bg-primary/40 border border-primary/30 transition-all"
+                >
+                  <Icon name={isMusicPlaying ? 'Volume2' : 'VolumeX'} className="inline mr-2" size={18} />
+                  {isMusicPlaying ? 'Выключить музыку' : 'Включить музыку'}
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm">Звуки интерфейса</label>
+                  <span className="text-sm text-muted-foreground">{Math.round(soundVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={soundVolume * 100}
+                  onChange={(e) => setSoundVolume(Number(e.target.value) / 100)}
+                  className="w-full accent-primary"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showAuth && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowAuth(false)}>
+          <Card className="bg-card/95 backdrop-blur-md border-primary/30 w-full max-w-md animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+                <button onClick={() => setShowAuth(false)}>
+                  <Icon name="X" size={24} className="text-muted-foreground hover:text-foreground" />
+                </button>
+              </CardTitle>
+              <CardDescription>
+                {isLogin ? 'Войдите чтобы сохранить свои истории' : 'Создайте аккаунт для путешествия в мир историй'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm">Email</label>
+                <input
+                  type="email"
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 rounded-lg bg-muted/20 border border-primary/20 focus:border-primary/50 outline-none transition-all"
+                  id="auth-email"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm">Пароль</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-lg bg-muted/20 border border-primary/20 focus:border-primary/50 outline-none transition-all"
+                  id="auth-password"
+                />
+              </div>
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <label className="text-sm">Повторите пароль</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-4 py-3 rounded-lg bg-muted/20 border border-primary/20 focus:border-primary/50 outline-none transition-all"
+                  />
+                </div>
+              )}
+
+              <Button 
+                className="w-full bg-primary hover:bg-primary/80"
+                onClick={() => {
+                  const email = (document.getElementById('auth-email') as HTMLInputElement)?.value;
+                  const password = (document.getElementById('auth-password') as HTMLInputElement)?.value;
+                  if (email && password) handleAuth(email, password);
+                }}
+              >
+                {isLogin ? 'Войти' : 'Зарегистрироваться'}
+              </Button>
+
+              {isLogin && (
+                <button className="w-full text-sm text-muted-foreground hover:text-accent transition-all">
+                  Забыли пароль? Восстановить через почту
+                </button>
+              )}
+
+              <div className="text-center">
+                <button
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-accent hover:underline"
+                >
+                  {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {activeSection === 'home' && (
         <>
@@ -205,53 +369,64 @@ const Index = () => {
             <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent leading-tight">
               Midnight Chronicles
             </h1>
-            <p className="text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Создавай уникальные истории, персонажей и миры с помощью DeepSeek AI.
+            <p className="text-2xl story-text max-w-3xl mx-auto leading-relaxed">
+              <span className="text-foreground/90">Погрузись в мир интерактивных историй, где</span>{' '}
+              <span className="text-accent font-semibold">DeepSeek AI</span>{' '}
+              <span className="text-foreground/90">становится твоим личным рассказчиком.</span>
               <br />
-              <span className="text-accent">Глубокие истории без цензуры. Твоё путешествие без границ начинается сейчас.</span>
+              <span className="text-muted-foreground italic mt-4 block">
+                Глубокие сюжеты без цензуры. Каждое решение меняет историю. Твоё путешествие начинается здесь.
+              </span>
             </p>
             <div className="flex gap-4 justify-center pt-6">
               <Button 
                 size="lg" 
                 className="bg-primary hover:bg-primary/80 text-lg px-8 py-6"
-                onClick={() => { setActiveSection('characters'); playSound('click'); }}
+                onClick={() => { 
+                  if (!user) {
+                    setShowAuth(true);
+                  } else {
+                    setActiveSection('characters'); 
+                  }
+                  playSound('click'); 
+                }}
                 onMouseEnter={() => playSound('hover')}
               >
                 <Icon name="Sparkles" className="mr-2" size={20} />
-                Создать персонажа
+                Начать историю
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
                 className="border-primary/30 text-lg px-8 py-6"
-                onClick={() => { setActiveSection('library'); playSound('click'); }}
+                onClick={() => { setActiveSection('community'); playSound('click'); }}
                 onMouseEnter={() => playSound('hover')}
               >
-                <Icon name="BookOpen" className="mr-2" size={20} />
-                Библиотека
+                <Icon name="Users" className="mr-2" size={20} />
+                Сообщество
               </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16">
               <Card className="bg-card/80 backdrop-blur border-primary/20 hover:border-primary/40 transition-all hover-scale">
                 <CardHeader>
-                  <Icon name="Users" className="text-primary mb-2" size={40} />
-                  <CardTitle>Персонажи</CardTitle>
-                  <CardDescription>Генерируй уникальных героев с детальными характеристиками</CardDescription>
+                  <Icon name="BookOpen" className="text-primary mb-2" size={40} />
+                  <CardTitle>Интерактивные истории</CardTitle>
+                  <CardDescription className="story-text">Нейросеть создаёт уникальный сюжет на основе твоих выборов</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="bg-card/80 backdrop-blur border-primary/20 hover:border-primary/40 transition-all hover-scale">
                 <CardHeader>
-                  <Icon name="Scroll" className="text-accent mb-2" size={40} />
-                  <CardTitle>Истории</CardTitle>
-                  <CardDescription>Создавай эпические сюжеты и приключения</CardDescription>
+                  <Icon name="Brain" className="text-accent mb-2" size={40} />
+                  <CardTitle>DeepSeek AI</CardTitle>
+                  <CardDescription className="story-text">Глубокие истории без цензуры и ограничений</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="bg-card/80 backdrop-blur border-primary/20 hover:border-primary/40 transition-all hover-scale">
                 <CardHeader>
-                  <Icon name="Globe" className="text-secondary mb-2" size={40} />
-                  <CardTitle>Миры</CardTitle>
-                  <CardDescription>Строй целые вселенные с богатой историей</CardDescription>
+                  <Icon name="Users" className="text-secondary mb-2" size={40} />
+                  <CardTitle>Сообщество</CardTitle>
+                  <CardDescription className="story-text">Делись историями и находи единомышленников</CardDescription>
                 </CardHeader>
               </Card>
             </div>

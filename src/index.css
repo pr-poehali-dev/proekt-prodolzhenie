@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Merriweather:wght@300;400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=EB+Garamond:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -54,7 +54,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Merriweather", serif;
+    font-family: "EB Garamond", serif;
+    letter-spacing: 0.02em;
   }
 
   h1,
@@ -63,7 +64,16 @@
   h4,
   h5,
   h6 {
-    font-family: "Cinzel", serif;
+    font-family: "Playfair Display", serif;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  p,
+  .story-text {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.125rem;
+    line-height: 1.8;
   }
 }
 
