@@ -117,3 +117,13 @@
 .hover-scale:hover {
   transform: scale(1.05);
 }
+
+.spotlight-effect {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 40%,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(0, 0, 0, 0.3) 60%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+  pointer-events: none;
+}

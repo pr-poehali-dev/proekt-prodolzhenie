@@ -28,6 +28,12 @@ const Index = () => {
     emblaApi.on('select', () => {
       setSelectedIndex(emblaApi.selectedScrollSnap());
     });
+
+    const autoplay = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000);
+
+    return () => clearInterval(autoplay);
   }, [emblaApi]);
 
   const races = ['Человек', 'Эльф', 'Дварф', 'Орк', 'Полурослик'];
@@ -98,13 +104,15 @@ const Index = () => {
                 <div key={idx} className="flex-[0_0_100%] min-w-0 relative">
                   <div className="relative h-[70vh] w-full">
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0e1a] z-10"></div>
+                    <div className="absolute inset-0 spotlight-effect z-[5]"></div>
                     <img 
                       src={img} 
                       alt={`Hero ${idx + 1}`}
-                      className="w-full h-full object-cover blur-[2px] opacity-60"
+                      className="w-full h-full object-cover"
                       style={{
-                        maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)'
+                        maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 70%, transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 70%, transparent 100%)',
+                        filter: 'blur(0px) brightness(0.7)'
                       }}
                     />
                   </div>
