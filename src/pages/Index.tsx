@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +9,26 @@ import { Badge } from '@/components/ui/badge';
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [generatedCharacter, setGeneratedCharacter] = useState<any>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const heroImages = [
+    'https://cdn.poehali.dev/files/902a10c0-1041-4974-99e4-814f00cd8f66.jpg',
+    'https://cdn.poehali.dev/files/551e82a5-ca95-4040-a740-c6af304236dd.jpeg',
+    'https://cdn.poehali.dev/files/d738d541-5687-4f75-a0dc-4090bb5cda22.jpeg',
+    'https://cdn.poehali.dev/files/dcb69336-e2e0-4b0d-b269-05d66e810674.jpeg',
+    'https://cdn.poehali.dev/files/7c5ea764-f371-4fdd-a1a3-e38d0c869a2a.jpeg'
+  ];
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap());
+    });
+  }, [emblaApi]);
 
   const races = ['Человек', 'Эльф', 'Дварф', 'Орк', 'Полурослик'];
   const classes = ['Воин', 'Маг', 'Плут', 'Жрец', 'Следопыт'];
@@ -41,7 +62,9 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1A1F2C] via-[#2D1B4E] to-[#1A1F2C]">
+    <div className="min-h-screen bg-[#0a0e1a] relative overflow-hidden">
+      <div className="stars-bg absolute inset-0 z-0"></div>
+      <div className="relative z-10">
       <nav className="border-b border-primary/20 bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
@@ -68,7 +91,51 @@ const Index = () => {
       </nav>
 
       {activeSection === 'home' && (
-        <section className="container mx-auto px-4 py-20 text-center">
+        <>
+          <div className="relative overflow-hidden" ref={emblaRef}>
+            <div className="flex">
+              {heroImages.map((img, idx) => (
+                <div key={idx} className="flex-[0_0_100%] min-w-0 relative">
+                  <div className="relative h-[70vh] w-full">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0e1a] z-10"></div>
+                    <img 
+                      src={img} 
+                      alt={`Hero ${idx + 1}`}
+                      className="w-full h-full object-cover blur-[2px] opacity-60"
+                      style={{
+                        maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={scrollPrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 backdrop-blur-md p-3 rounded-full border border-primary/30 transition-all"
+            >
+              <Icon name="ChevronLeft" size={32} className="text-accent" />
+            </button>
+            <button
+              onClick={scrollNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-primary/20 hover:bg-primary/40 backdrop-blur-md p-3 rounded-full border border-primary/30 transition-all"
+            >
+              <Icon name="ChevronRight" size={32} className="text-accent" />
+            </button>
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {heroImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => emblaApi?.scrollTo(idx)}
+                  className={`w-3 h-3 rounded-full transition-all blur-[0.5px] ${
+                    idx === selectedIndex ? 'bg-accent w-8' : 'bg-muted/50'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        <section className="container mx-auto px-4 py-20 text-center relative z-20">
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
             <Badge className="bg-primary/20 text-accent border-primary/30 text-lg px-6 py-2">
               ✨ Powered by AI
@@ -126,6 +193,7 @@ const Index = () => {
             </div>
           </div>
         </section>
+        </>
       )}
 
       {activeSection === 'characters' && (
@@ -306,6 +374,7 @@ const Index = () => {
           <p>© 2024 Midnight Chronicles. Создавай магию каждый день.</p>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
